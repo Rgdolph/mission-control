@@ -94,10 +94,48 @@ export default function InboxPage() {
   };
 
   const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+  const [todoCreatedIds, setTodoCreatedIds] = useState<Set<string>>(new Set());
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const archiveItem = (item: InboxItem) => {
     setArchivedIds(prev => new Set(prev).add(item.id));
     if (selected === item.id) setSelected(null);
+    showToast(`Archived: ${item.from}`);
+  };
+
+  const createTodo = async (item: InboxItem) => {
+    if (todoCreatedIds.has(item.id)) {
+      showToast("Already added to Notion");
+      return;
+    }
+    try {
+      const res = await fetch("/api/inbox/todo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: item.from,
+          fromEmail: item.fromEmail,
+          subject: item.subject,
+          snippet: item.snippet,
+          type: item.type,
+          messageId: item.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTodoCreatedIds(prev => new Set(prev).add(item.id));
+        showToast("✅ Added to Notion");
+      } else {
+        showToast("❌ Failed: " + (data.error || "Unknown error"));
+      }
+    } catch {
+      showToast("❌ Failed to create task");
+    }
   };
 
   const fetchInbox = useCallback(async () => {
@@ -356,8 +394,8 @@ export default function InboxPage() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 border-b border-border-subtle px-5 py-2.5">
-                <ActionBtn icon={CheckSquare} label="To Do" />
-                <AssignDropdown />
+                <ActionBtn icon={CheckSquare} label={todoCreatedIds.has(sel.id) ? "✓ Added" : "To Do"} onClick={() => createTodo(sel)} active={todoCreatedIds.has(sel.id)} />
+                <AssignDropdown onAssign={(person) => showToast(`Assigned to ${person}`)} />
                 <ActionBtn icon={Reply} label="Reply" onClick={() => setReplyTo(replyTo === sel.id ? null : sel.id)} active={replyTo === sel.id} />
                 <ActionBtn icon={Archive} label="Archive" onClick={() => archiveItem(sel)} />
                 {sel.type === "email" && (
@@ -416,13 +454,20 @@ export default function InboxPage() {
           )}
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-border-subtle bg-bg-secondary px-4 py-2.5 text-sm text-text-primary shadow-xl animate-in slide-in-from-bottom-2">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
 
-function AssignDropdown() {
+function AssignDropdown({ onAssign }: { onAssign?: (person: string) => void }) {
   const [open, setOpen] = useState(false);
-  const people = ["Molly", "Julie", "Brandon"];
+  const people = ["Terry", "Julie", "Brandon"];
   return (
     <div className="relative">
       <button
@@ -442,7 +487,7 @@ function AssignDropdown() {
           {people.map(p => (
             <button
               key={p}
-              onClick={() => { setOpen(false); }}
+              onClick={() => { setOpen(false); onAssign?.(p); }}
               className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors"
             >
               {p}
