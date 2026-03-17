@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const NOTION_TOKEN = "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";
+const NOTION_TOKEN = process.env.NOTION_TOKEN!;
 const NOTION_VERSION = "2022-06-28";
 
 interface NotionRichText {
