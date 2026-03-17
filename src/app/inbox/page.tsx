@@ -93,6 +93,13 @@ export default function InboxPage() {
     setSelected(null);
   };
 
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+
+  const archiveItem = (item: InboxItem) => {
+    setArchivedIds(prev => new Set(prev).add(item.id));
+    if (selected === item.id) setSelected(null);
+  };
+
   const fetchInbox = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -129,6 +136,7 @@ export default function InboxPage() {
   useEffect(() => { fetchInbox(); }, [fetchInbox]);
 
   const notBlocked = items.filter(i => {
+    if (archivedIds.has(i.id)) return false;
     const sender = (i.fromEmail || i.from || "").toLowerCase();
     return !blockedSenders.includes(sender);
   });
@@ -258,11 +266,11 @@ export default function InboxPage() {
               </div>
             ) : (
               filtered.map(item => (
-                <button
+                <div
                   key={item.id}
                   onClick={() => selectItem(item.id)}
                   className={cn(
-                    "w-full text-left px-4 py-3 transition-colors hover:bg-bg-hover",
+                    "group w-full text-left px-4 py-3 transition-colors hover:bg-bg-hover cursor-pointer relative",
                     selected === item.id && "bg-bg-active",
                     !item.read && "border-l-2 border-l-accent-blue"
                   )}
@@ -275,11 +283,18 @@ export default function InboxPage() {
                     )}
                     <span className={cn("text-sm truncate", !item.read && "font-semibold")}>{item.from}</span>
                     {!item.read && <span className="h-1.5 w-1.5 rounded-full bg-accent-blue shrink-0" />}
-                    <span className="ml-auto text-[10px] text-text-tertiary shrink-0">{formatTime(item.time)}</span>
+                    <span className="ml-auto text-[10px] text-text-tertiary shrink-0 group-hover:hidden">{formatTime(item.time)}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); archiveItem(item); }}
+                      className="ml-auto hidden group-hover:flex items-center gap-1 rounded-md border border-border-subtle bg-bg-tertiary px-1.5 py-0.5 text-[10px] text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors shrink-0"
+                      title="Archive"
+                    >
+                      <Archive className="h-3 w-3" />
+                    </button>
                   </div>
                   <p className="mt-1 text-xs text-text-secondary truncate">{item.subject}</p>
                   <p className="mt-0.5 text-[11px] text-text-tertiary truncate">{item.snippet}</p>
-                </button>
+                </div>
               ))
             )}
           </div>
