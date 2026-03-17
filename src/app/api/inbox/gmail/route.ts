@@ -5,11 +5,12 @@ async function getAccessToken(): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID!,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      refresh_token: process.env.GOOGLE_REFRESH_TOKEN!,
+      client_id: process.env.GOOGLE_CLIENT_ID!.trim(),
+      client_secret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN!.trim(),
       grant_type: "refresh_token",
     }),
+    cache: "no-store",
   });
   const data = await res.json();
   if (!data.access_token) throw new Error("Failed to refresh Google token");
@@ -103,8 +104,8 @@ export async function GET() {
     // Fetch from both INBOX and "1) Reference" label (Make moves emails there every 2hrs)
     const REFERENCE_LABEL = "Label_2"; // "1) Reference"
     const [inboxRes, refRes] = await Promise.all([
-      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=INBOX`, { headers }),
-      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=${REFERENCE_LABEL}`, { headers }),
+      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=INBOX`, { headers, cache: "no-store" }),
+      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=${REFERENCE_LABEL}`, { headers, cache: "no-store" }),
     ]);
     // Use whichever succeeds; combine both
     const listRes = inboxRes;
@@ -135,36 +136,42 @@ export async function GET() {
     }
 
     // Fetch each message detail (batch of IDs) — fetch all, sort by date after
-    const messages = await Promise.all(
+    const results = await Promise.all(
       list.messages.slice(0, 30).map(async (m: { id: string }) => {
-        const msgRes = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
-          { headers }
-        );
-        const msg: GmailMessage = await msgRes.json();
+        try {
+          const msgRes = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
+            { headers, cache: "no-store" }
+          );
+          if (!msgRes.ok) return null;
+          const msg: GmailMessage = await msgRes.json();
 
-        const getHeader = (name: string) =>
-          msg.payload?.headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
+          const getHeader = (name: string) =>
+            msg.payload?.headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value || "";
 
-        const fromRaw = getHeader("From");
-        const fromMatch = fromRaw.match(/^"?([^"<]+)"?\s*<?/);
-        const fromName = fromMatch ? fromMatch[1].trim() : fromRaw;
+          const fromRaw = getHeader("From");
+          const fromMatch = fromRaw.match(/^"?([^"<]+)"?\s*<?/);
+          const fromName = fromMatch ? fromMatch[1].trim() : fromRaw;
 
-        const body = extractBody(msg.payload) || decodeHtmlEntities(msg.snippet || "");
+          const body = extractBody(msg.payload) || decodeHtmlEntities(msg.snippet || "");
 
-        return {
-          id: msg.id,
-          type: "email" as const,
-          from: fromName,
-          fromEmail: fromRaw,
-          subject: decodeHtmlEntities(getHeader("Subject") || "(no subject)"),
-          snippet: decodeHtmlEntities(msg.snippet || ""),
-          body: body,
-          time: new Date(parseInt(msg.internalDate)).toISOString(),
-          read: !msg.labelIds?.includes("UNREAD"),
-        };
+          return {
+            id: msg.id,
+            type: "email" as const,
+            from: fromName,
+            fromEmail: fromRaw,
+            subject: decodeHtmlEntities(getHeader("Subject") || "(no subject)"),
+            snippet: decodeHtmlEntities(msg.snippet || ""),
+            body: body,
+            time: msg.internalDate ? new Date(parseInt(msg.internalDate)).toISOString() : new Date().toISOString(),
+            read: !msg.labelIds?.includes("UNREAD"),
+          };
+        } catch {
+          return null;
+        }
       })
     );
+    const messages = results.filter((m): m is NonNullable<typeof m> => m !== null);
 
     // Sort by date, newest first
     messages.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());

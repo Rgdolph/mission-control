@@ -26,24 +26,23 @@ export async function GET(req: Request) {
   try {
     // Build query - fetch more to allow client-side filtering
     const params = new URLSearchParams({
-      locationId: process.env.GHL_LOCATION_ID || "",
+      locationId: (process.env.GHL_LOCATION_ID || "").trim(),
       limit: "50",
       sortBy: "last_message_date",
       sortOrder: "desc",
     });
 
-    // If filtering to "mine", add assignedTo param
-    if (assignedFilter === "mine") {
-      params.set("assignedTo", RYAN_USER_ID);
-    }
+    // Note: assignedTo filter removed — most inbound convos aren't assigned
+    // "mine" vs "all" filtering can be done client-side if needed later
 
     const res = await fetch(
       `https://services.leadconnectorhq.com/conversations/search?${params.toString()}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.GHL_PIT_KEY}`,
+          Authorization: `Bearer ${(process.env.GHL_PIT_KEY || "").trim()}`,
           Version: "2021-07-28",
         },
+        cache: "no-store",
       }
     );
 
@@ -59,10 +58,11 @@ export async function GET(req: Request) {
         const dir = c.lastMessageDirection;
         const msgType = (c.lastMessageType || "").toUpperCase();
 
-        // Only allow actual inbound client messages (SMS, email, chat)
+        // Only allow actual client messages (SMS, email, chat)
         const ALLOWED_TYPES = ["TYPE_SMS", "TYPE_EMAIL", "TYPE_LIVE_CHAT", "TYPE_FB", "TYPE_FACEBOOK", "TYPE_WEBCHAT", "TYPE_IG", "TYPE_INSTAGRAM"];
         if (!ALLOWED_TYPES.some(t => msgType.includes(t.replace("TYPE_", "")))) return false;
-        // Must be inbound
+
+        // Only show inbound messages
         if (dir !== "inbound") return false;
 
         return true;

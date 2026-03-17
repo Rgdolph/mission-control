@@ -47,7 +47,7 @@ export default function InboxPage() {
   const [gmailAuthUrl, setGmailAuthUrl] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("all");
-  const [scope, setScope] = useState<Scope>("mine");
+  const [scope, setScope] = useState<Scope>("all");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [blockedSenders, setBlockedSenders] = useState<string[]>([]);
   const [convoMessages, setConvoMessages] = useState<{id: string; body: string; direction: string; type: string; time: string}[]>([]);
@@ -210,26 +210,28 @@ export default function InboxPage() {
           ))}
         </div>
 
-        {/* Scope toggle */}
-        <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
-          {([
-            { key: "mine" as Scope, label: "Mine" },
-            { key: "all" as Scope, label: "All" },
-          ]).map(s => (
-            <button
-              key={s.key}
-              onClick={() => setScope(s.key)}
-              className={cn(
-                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
-                scope === s.key
-                  ? "bg-bg-secondary text-text-primary shadow-sm"
-                  : "text-text-tertiary hover:text-text-secondary"
-              )}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        {/* Scope toggle - only show for Flight tab */}
+        {tab === "ghl" && (
+          <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
+            {([
+              { key: "mine" as Scope, label: "Mine" },
+              { key: "all" as Scope, label: "All" },
+            ]).map(s => (
+              <button
+                key={s.key}
+                onClick={() => setScope(s.key)}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
+                  scope === s.key
+                    ? "bg-bg-secondary text-text-primary shadow-sm"
+                    : "text-text-tertiary hover:text-text-secondary"
+                )}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
