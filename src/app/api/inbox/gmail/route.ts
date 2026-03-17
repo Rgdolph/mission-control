@@ -21,6 +21,12 @@ interface GmailHeader {
   value: string;
 }
 
+interface GmailPart {
+  mimeType?: string;
+  body?: { data?: string; size?: number };
+  parts?: GmailPart[];
+}
+
 interface GmailMessage {
   id: string;
   labelIds?: string[];
@@ -28,7 +34,46 @@ interface GmailMessage {
   internalDate: string;
   payload?: {
     headers?: GmailHeader[];
+    mimeType?: string;
+    body?: { data?: string; size?: number };
+    parts?: GmailPart[];
   };
+}
+
+function extractBody(payload?: GmailPart): string {
+  if (!payload) return "";
+  // Try to find text/plain first, then text/html
+  if (payload.mimeType === "text/plain" && payload.body?.data) {
+    return Buffer.from(payload.body.data, "base64url").toString("utf-8");
+  }
+  if (payload.parts) {
+    // Recurse: prefer text/plain
+    for (const part of payload.parts) {
+      if (part.mimeType === "text/plain" && part.body?.data) {
+        return Buffer.from(part.body.data, "base64url").toString("utf-8");
+      }
+    }
+    // Fallback: text/html stripped
+    for (const part of payload.parts) {
+      if (part.mimeType === "text/html" && part.body?.data) {
+        const html = Buffer.from(part.body.data, "base64url").toString("utf-8");
+        return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+    }
+    // Recurse deeper (multipart/mixed, multipart/related, etc.)
+    for (const part of payload.parts) {
+      const found = extractBody(part);
+      if (found) return found;
+    }
+  }
+  // Direct body on payload (simple messages)
+  if (payload.body?.data) {
+    return Buffer.from(payload.body.data, "base64url").toString("utf-8");
+  }
+  return "";
 }
 
 function decodeHtmlEntities(text: string): string {
@@ -93,7 +138,7 @@ export async function GET() {
     const messages = await Promise.all(
       list.messages.slice(0, 30).map(async (m: { id: string }) => {
         const msgRes = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=full`,
           { headers }
         );
         const msg: GmailMessage = await msgRes.json();
@@ -105,6 +150,8 @@ export async function GET() {
         const fromMatch = fromRaw.match(/^"?([^"<]+)"?\s*<?/);
         const fromName = fromMatch ? fromMatch[1].trim() : fromRaw;
 
+        const body = extractBody(msg.payload) || decodeHtmlEntities(msg.snippet || "");
+
         return {
           id: msg.id,
           type: "email" as const,
@@ -112,6 +159,7 @@ export async function GET() {
           fromEmail: fromRaw,
           subject: decodeHtmlEntities(getHeader("Subject") || "(no subject)"),
           snippet: decodeHtmlEntities(msg.snippet || ""),
+          body: body,
           time: new Date(parseInt(msg.internalDate)).toISOString(),
           read: !msg.labelIds?.includes("UNREAD"),
         };

@@ -11,6 +11,7 @@ type InboxItem = {
   fromEmail?: string;
   subject: string;
   snippet: string;
+  body?: string;
   time: string;
   read: boolean;
   direction?: string;
@@ -349,7 +350,7 @@ export default function InboxPage() {
                 ) : convoLoading ? (
                   <p className="text-xs text-text-tertiary animate-pulse">Loading messages…</p>
                 ) : (
-                  <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{sel.snippet}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{sel.body || sel.snippet}</p>
                 )}
               </div>
               <div className="flex flex-wrap gap-2 border-t border-border-subtle px-5 py-3">
