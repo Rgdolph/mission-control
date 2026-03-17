@@ -181,19 +181,19 @@ export default function InboxPage() {
       )}
 
       {/* Filters row */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         {/* Source tabs */}
         <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
           {([
             { key: "all" as Tab, label: "All", count: notBlocked.filter(i => !i.read).length },
             { key: "email" as Tab, label: "Email", count: unreadEmail },
-            { key: "ghl" as Tab, label: "Flight / GHL", count: unreadGhl },
+            { key: "ghl" as Tab, label: "Flight", count: unreadGhl },
           ]).map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
                 tab === t.key
                   ? "bg-bg-secondary text-text-primary shadow-sm"
                   : "text-text-tertiary hover:text-text-secondary"
@@ -201,7 +201,7 @@ export default function InboxPage() {
             >
               {t.label}
               {t.count > 0 && (
-                <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-accent-blue/20 text-accent-blue px-1.5 min-w-[18px] text-[10px] font-semibold">
+                <span className="ml-1 inline-flex items-center justify-center rounded-full bg-accent-blue/20 text-accent-blue px-1 min-w-[16px] text-[10px] font-semibold">
                   {t.count}
                 </span>
               )}
@@ -212,14 +212,14 @@ export default function InboxPage() {
         {/* Scope toggle */}
         <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
           {([
-            { key: "mine" as Scope, label: "My Conversations" },
-            { key: "all" as Scope, label: "All Conversations" },
+            { key: "mine" as Scope, label: "Mine" },
+            { key: "all" as Scope, label: "All" },
           ]).map(s => (
             <button
               key={s.key}
               onClick={() => setScope(s.key)}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
                 scope === s.key
                   ? "bg-bg-secondary text-text-primary shadow-sm"
                   : "text-text-tertiary hover:text-text-secondary"
