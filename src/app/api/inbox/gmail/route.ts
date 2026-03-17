@@ -41,40 +41,48 @@ interface GmailMessage {
   };
 }
 
-function extractBody(payload?: GmailPart): string {
-  if (!payload) return "";
-  // Try to find text/plain first, then text/html
-  if (payload.mimeType === "text/plain" && payload.body?.data) {
-    return Buffer.from(payload.body.data, "base64url").toString("utf-8");
-  }
+function extractBody(payload?: GmailPart): { html: string; isHtml: boolean } {
+  if (!payload) return { html: "", isHtml: false };
+
   if (payload.parts) {
-    // Recurse: prefer text/plain
-    for (const part of payload.parts) {
-      if (part.mimeType === "text/plain" && part.body?.data) {
-        return Buffer.from(part.body.data, "base64url").toString("utf-8");
-      }
-    }
-    // Fallback: text/html stripped
+    // Prefer text/html for proper email rendering
     for (const part of payload.parts) {
       if (part.mimeType === "text/html" && part.body?.data) {
         const html = Buffer.from(part.body.data, "base64url").toString("utf-8");
-        return html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+        // Strip scripts and event handlers for safety, keep structure
+        const safe = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+          .replace(/\son\w+="[^"]*"/gi, "")
+          .replace(/\son\w+='[^']*'/gi, "");
+        return { html: safe, isHtml: true };
+      }
+    }
+    // Fallback: text/plain
+    for (const part of payload.parts) {
+      if (part.mimeType === "text/plain" && part.body?.data) {
+        return { html: Buffer.from(part.body.data, "base64url").toString("utf-8"), isHtml: false };
       }
     }
     // Recurse deeper (multipart/mixed, multipart/related, etc.)
     for (const part of payload.parts) {
       const found = extractBody(part);
-      if (found) return found;
+      if (found.html) return found;
     }
   }
-  // Direct body on payload (simple messages)
-  if (payload.body?.data) {
-    return Buffer.from(payload.body.data, "base64url").toString("utf-8");
+
+  // Direct body on payload
+  if (payload.mimeType === "text/html" && payload.body?.data) {
+    const html = Buffer.from(payload.body.data, "base64url").toString("utf-8");
+    const safe = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/\son\w+="[^"]*"/gi, "")
+      .replace(/\son\w+='[^']*'/gi, "");
+    return { html: safe, isHtml: true };
   }
-  return "";
+  if (payload.body?.data) {
+    return { html: Buffer.from(payload.body.data, "base64url").toString("utf-8"), isHtml: false };
+  }
+  return { html: "", isHtml: false };
 }
 
 function decodeHtmlEntities(text: string): string {
@@ -153,7 +161,8 @@ export async function GET() {
           const fromMatch = fromRaw.match(/^"?([^"<]+)"?\s*<?/);
           const fromName = fromMatch ? fromMatch[1].trim() : fromRaw;
 
-          const body = extractBody(msg.payload) || decodeHtmlEntities(msg.snippet || "");
+          const extracted = extractBody(msg.payload);
+          const body = extracted.html || decodeHtmlEntities(msg.snippet || "");
 
           return {
             id: msg.id,
@@ -163,6 +172,7 @@ export async function GET() {
             subject: decodeHtmlEntities(getHeader("Subject") || "(no subject)"),
             snippet: decodeHtmlEntities(msg.snippet || ""),
             body: body,
+            bodyHtml: extracted.isHtml,
             time: msg.internalDate ? new Date(parseInt(msg.internalDate)).toISOString() : new Date().toISOString(),
             read: !msg.labelIds?.includes("UNREAD"),
           };

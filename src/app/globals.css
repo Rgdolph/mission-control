@@ -26,4 +26,37 @@ body {
   .glow-purple { box-shadow: 0 0 20px rgba(139, 92, 246, 0.15); }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* Email body rendering */
+  .email-body {
+    overflow-x: auto;
+    word-break: break-word;
+  }
+  .email-body blockquote {
+    border-left: 3px solid rgba(255,255,255,0.15);
+    padding-left: 12px;
+    margin: 8px 0;
+    color: rgba(255,255,255,0.5);
+  }
+  .email-body a {
+    color: #4c8dff;
+    text-decoration: underline;
+  }
+  .email-body img {
+    max-width: 100%;
+    height: auto;
+  }
+  .email-body table {
+    max-width: 100%;
+    font-size: 14px;
+  }
+  .email-body br + br {
+    display: none;
+  }
+  .email-body .gmail_quote {
+    border-left: 3px solid rgba(255,255,255,0.15);
+    padding-left: 12px;
+    margin: 8px 0;
+    color: rgba(255,255,255,0.5);
+  }
 }
