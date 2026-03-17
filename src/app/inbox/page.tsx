@@ -355,7 +355,25 @@ export default function InboxPage() {
                   {" · "}{formatTime(sel.time)}
                 </p>
               </div>
-              <div className="px-5 py-4">
+              <div className="flex flex-wrap gap-2 border-b border-border-subtle px-5 py-2.5">
+                <ActionBtn icon={CheckSquare} label="To Do" />
+                <AssignDropdown />
+                <ActionBtn icon={Reply} label="Reply" onClick={() => setReplyTo(replyTo === sel.id ? null : sel.id)} active={replyTo === sel.id} />
+                <ActionBtn icon={Archive} label="Archive" onClick={() => archiveItem(sel)} />
+                {sel.type === "email" && (
+                  <ActionBtn icon={EyeOff} label="Block Sender" onClick={() => blockSender(sel.fromEmail || sel.from)} />
+                )}
+              </div>
+              {replyTo === sel.id && (
+                <ReplyPanel
+                  messageId={sel.id}
+                  messageContent={sel.snippet}
+                  subject={sel.subject}
+                  from={sel.from}
+                  onClose={() => setReplyTo(null)}
+                />
+              )}
+              <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
                 {sel.type === "ghl" && convoMessages.length > 0 ? (
                   <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                     {convoMessages.slice().reverse().map((m, i) => (
@@ -390,24 +408,6 @@ export default function InboxPage() {
                   )
                 )}
               </div>
-              <div className="flex flex-wrap gap-2 border-t border-border-subtle px-5 py-3">
-                <ActionBtn icon={CheckSquare} label="To Do" />
-                <AssignDropdown />
-                <ActionBtn icon={Reply} label="Reply" onClick={() => setReplyTo(replyTo === sel.id ? null : sel.id)} active={replyTo === sel.id} />
-                <ActionBtn icon={Archive} label="Archive" />
-                {sel.type === "email" && (
-                  <ActionBtn icon={EyeOff} label="Block Sender" onClick={() => blockSender(sel.fromEmail || sel.from)} />
-                )}
-              </div>
-              {replyTo === sel.id && (
-                <ReplyPanel
-                  messageId={sel.id}
-                  messageContent={sel.snippet}
-                  subject={sel.subject}
-                  from={sel.from}
-                  onClose={() => setReplyTo(null)}
-                />
-              )}
             </div>
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-text-tertiary">
