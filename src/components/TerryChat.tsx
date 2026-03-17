@@ -64,8 +64,8 @@ export default function TerryChat() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-20 right-5 z-50 flex w-96 flex-col rounded-2xl border border-border-subtle bg-bg-secondary shadow-2xl overflow-hidden"
-          style={{ height: "480px" }}
+        <div className="fixed bottom-20 right-3 left-3 z-50 flex flex-col rounded-2xl border border-border-subtle bg-bg-secondary shadow-2xl overflow-hidden sm:left-auto sm:right-5 sm:w-96"
+          style={{ height: "min(480px, calc(100vh - 120px))" }}
         >
           {/* Header */}
           <div className="flex items-center gap-2 border-b border-border-subtle px-4 py-3 bg-bg-tertiary">

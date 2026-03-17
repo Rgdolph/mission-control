@@ -1,0 +1,10 @@
+
+> mission-control@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.21
+  - Local:        http://localhost:3001
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.9s

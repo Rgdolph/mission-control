@@ -24,4 +24,6 @@ body {
   }
   .glow-blue { box-shadow: 0 0 20px rgba(76, 141, 255, 0.15); }
   .glow-purple { box-shadow: 0 0 20px rgba(139, 92, 246, 0.15); }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }

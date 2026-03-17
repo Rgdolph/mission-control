@@ -46,8 +46,8 @@ export async function GET() {
     // Fetch from both INBOX and "1) Reference" label (Make moves emails there every 2hrs)
     const REFERENCE_LABEL = "Label_2"; // "1) Reference"
     const [inboxRes, refRes] = await Promise.all([
-      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15&labelIds=INBOX`, { headers }),
-      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15&labelIds=${REFERENCE_LABEL}`, { headers }),
+      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=INBOX`, { headers }),
+      fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&labelIds=${REFERENCE_LABEL}`, { headers }),
     ]);
     // Use whichever succeeds; combine both
     const listRes = inboxRes;
@@ -77,9 +77,9 @@ export async function GET() {
       return NextResponse.json({ messages: [] });
     }
 
-    // Fetch each message detail (batch of IDs)
+    // Fetch each message detail (batch of IDs) — fetch all, sort by date after
     const messages = await Promise.all(
-      list.messages.slice(0, 20).map(async (m: { id: string }) => {
+      list.messages.slice(0, 30).map(async (m: { id: string }) => {
         const msgRes = await fetch(
           `https://gmail.googleapis.com/gmail/v1/users/me/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
           { headers }
@@ -106,7 +106,10 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json({ messages });
+    // Sort by date, newest first
+    messages.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+
+    return NextResponse.json({ messages: messages.slice(0, 20) });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Gmail API error:", message);

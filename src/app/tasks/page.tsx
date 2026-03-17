@@ -255,7 +255,7 @@ export default function TasksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Action Zone</h1>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Action Zone</h1>
           <p className="mt-1 text-sm text-text-secondary">
             Tasks from Notion — filtered by owner and status
           </p>
@@ -279,7 +279,7 @@ export default function TasksPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-border-subtle overflow-x-auto">
+      <div className="flex gap-0 border-b border-border-subtle overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         {TABS.map((t) => (
           <button
             key={t.key}

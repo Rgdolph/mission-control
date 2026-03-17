@@ -27,7 +27,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Good morning, Ryan</h1>
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">Good morning, Ryan</h1>
         <p className="mt-1 text-sm text-text-secondary">Monday, March 16, 2026 — Here&apos;s your command center.</p>
       </div>
 

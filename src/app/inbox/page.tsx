@@ -135,12 +135,23 @@ export default function InboxPage() {
   const unreadEmail = notBlocked.filter(i => i.type === "email" && !i.read).length;
   const unreadGhl = notBlocked.filter(i => i.type === "ghl" && !i.read).length;
 
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
+
+  const selectItem = (id: string) => {
+    setSelected(id);
+    setMobileShowDetail(true);
+  };
+
+  const backToList = () => {
+    setMobileShowDetail(false);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Inbox</h1>
-          <p className="mt-1 text-sm text-text-secondary">Unified inbox — emails and Flight messages</p>
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight truncate">Inbox</h1>
+          <p className="mt-1 text-sm text-text-secondary hidden sm:block">Unified inbox — emails and Flight messages</p>
         </div>
         <button
           onClick={fetchInbox}
@@ -170,7 +181,7 @@ export default function InboxPage() {
       )}
 
       {/* Filters row */}
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-3 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {/* Source tabs */}
         <div className="flex gap-1 rounded-lg bg-bg-tertiary p-1">
           {([
@@ -221,8 +232,11 @@ export default function InboxPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        {/* List */}
-        <div className="lg:col-span-2 rounded-xl border border-border-subtle bg-bg-secondary overflow-hidden">
+        {/* List - hidden on mobile when viewing detail */}
+        <div className={cn(
+          "lg:col-span-2 rounded-xl border border-border-subtle bg-bg-secondary overflow-hidden",
+          mobileShowDetail && "hidden lg:block"
+        )}>
           <div className="border-b border-border-subtle px-4 py-3 flex items-center gap-2">
             <span className="text-sm font-medium">
               {tab === "all" ? "All Messages" : tab === "email" ? "Emails" : "Flight / GHL"}
@@ -242,7 +256,7 @@ export default function InboxPage() {
               filtered.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setSelected(item.id)}
+                  onClick={() => selectItem(item.id)}
                   className={cn(
                     "w-full text-left px-4 py-3 transition-colors hover:bg-bg-hover",
                     selected === item.id && "bg-bg-active",
@@ -268,10 +282,20 @@ export default function InboxPage() {
         </div>
 
         {/* Detail */}
-        <div className="lg:col-span-3 rounded-xl border border-border-subtle bg-bg-secondary">
+        <div className={cn(
+          "lg:col-span-3 rounded-xl border border-border-subtle bg-bg-secondary",
+          !mobileShowDetail && "hidden lg:block"
+        )}>
           {sel ? (
             <div>
-              <div className="border-b border-border-subtle px-5 py-4">
+              <div className="border-b border-border-subtle px-4 md:px-5 py-4">
+                {/* Mobile back button */}
+                <button
+                  onClick={backToList}
+                  className="flex items-center gap-1 text-xs text-accent-blue mb-2 lg:hidden min-h-[44px]"
+                >
+                  ← Back to inbox
+                </button>
                 <div className="flex items-center gap-2">
                   {sel.type === "email" ? (
                     <Mail className="h-4 w-4 text-text-tertiary" />
