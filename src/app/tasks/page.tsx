@@ -30,15 +30,15 @@ type TaskDetail = {
   blocks: ParsedBlock[];
 };
 
-type Tab = "focus" | "waiting" | "mytodo" | "julie" | "molly" | "unassigned";
+type Tab = "focus" | "waiting" | "ryan" | "julie" | "molly" | "master";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "focus", label: "Focus" },
   { key: "waiting", label: "Waiting" },
-  { key: "mytodo", label: "My To-Do" },
-  { key: "julie", label: "Julie's" },
-  { key: "molly", label: "Molly's" },
-  { key: "unassigned", label: "Unassigned" },
+  { key: "ryan", label: "Ryan To-Do List" },
+  { key: "julie", label: "Julie To-Do List" },
+  { key: "molly", label: "Molly's To-Do List" },
+  { key: "master", label: "Master To-Do List" },
 ];
 
 function dueBadge(dueDate: string | null) {
@@ -77,7 +77,7 @@ function filterTasks(tasks: Task[], tab: Tab): Task[] {
       return tasks.filter((t) => t.focus);
     case "waiting":
       return tasks.filter((t) => t.waiting);
-    case "mytodo":
+    case "ryan":
       return tasks.filter(
         (t) =>
           !t.focus &&
@@ -93,8 +93,8 @@ function filterTasks(tasks: Task[], tab: Tab): Task[] {
       return tasks.filter(
         (t) => t.owner !== null && t.owner.toLowerCase().includes("molly")
       );
-    case "unassigned":
-      return tasks.filter((t) => t.owner === null);
+    case "master":
+      return tasks;
   }
 }
 
@@ -245,10 +245,10 @@ export default function TasksPage() {
   const tabCounts: Record<Tab, number> = {
     focus: filterTasks(tasks, "focus").length,
     waiting: filterTasks(tasks, "waiting").length,
-    mytodo: filterTasks(tasks, "mytodo").length,
+    ryan: filterTasks(tasks, "ryan").length,
     julie: filterTasks(tasks, "julie").length,
     molly: filterTasks(tasks, "molly").length,
-    unassigned: filterTasks(tasks, "unassigned").length,
+    master: filterTasks(tasks, "master").length,
   };
 
   return (

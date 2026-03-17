@@ -94,9 +94,8 @@ export async function GET() {
 
       if (!res.ok) {
         const err = await res.text();
-        console.error("Notion token prefix:", NOTION_TOKEN?.substring(0, 10), "len:", NOTION_TOKEN?.length);
         return NextResponse.json(
-          { error: `Notion API error: ${res.status}`, detail: err, tokenPrefix: NOTION_TOKEN?.substring(0, 10), tokenLen: NOTION_TOKEN?.length },
+          { error: `Notion API error: ${res.status}`, detail: err },
           { status: 502 }
         );
       }
