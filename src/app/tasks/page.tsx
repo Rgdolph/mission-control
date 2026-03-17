@@ -77,14 +77,15 @@ function filterTasks(tasks: Task[], tab: Tab): Task[] {
       return tasks.filter((t) => t.focus);
     case "waiting":
       return tasks.filter((t) => t.waiting);
-    case "ryan":
+    case "ryan": {
+      const exclude = ["marissa velasco", "julie mcginnis", "brandon dailey", "molly clark"];
       return tasks.filter(
         (t) =>
           !t.focus &&
           !t.waiting &&
-          t.owner !== null &&
-          t.owner.toLowerCase().includes("ryan")
+          !exclude.some((name) => t.owner?.toLowerCase().includes(name))
       );
+    }
     case "julie":
       return tasks.filter(
         (t) => t.owner !== null && t.owner.toLowerCase().includes("julie")
