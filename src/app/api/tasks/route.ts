@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN!;
+const NOTION_TOKEN = (process.env.NOTION_TOKEN || "").trim();
 const DATABASE_ID = "632ee05a-adef-47cf-b0cf-4283114cd67e";
 const NOTION_VERSION = "2022-06-28";
 
@@ -94,8 +94,9 @@ export async function GET() {
 
       if (!res.ok) {
         const err = await res.text();
+        console.error("Notion token prefix:", NOTION_TOKEN?.substring(0, 10), "len:", NOTION_TOKEN?.length);
         return NextResponse.json(
-          { error: `Notion API error: ${res.status}`, detail: err },
+          { error: `Notion API error: ${res.status}`, detail: err, tokenPrefix: NOTION_TOKEN?.substring(0, 10), tokenLen: NOTION_TOKEN?.length },
           { status: 502 }
         );
       }
