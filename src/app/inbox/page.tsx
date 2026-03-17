@@ -140,7 +140,19 @@ export default function InboxPage() {
     const sender = (i.fromEmail || i.from || "").toLowerCase();
     return !blockedSenders.includes(sender);
   });
-  const filtered = tab === "all" ? notBlocked : notBlocked.filter(i => i.type === tab);
+  // "All" tab: show all emails + only MY Flight messages
+  // "Email" tab: all emails
+  // "Flight" tab: respects Mine/All scope toggle
+  const RYAN_GHL_ID = "L2myudaZkCjtUV4VXZzj";
+  const isMyGhl = (i: InboxItem) => !i.assignedTo || i.assignedTo === RYAN_GHL_ID;
+
+  const filtered = tab === "all"
+    ? notBlocked.filter(i => i.type === "email" || (i.type === "ghl" && isMyGhl(i)))
+    : tab === "email"
+    ? notBlocked.filter(i => i.type === "email")
+    : scope === "mine"
+    ? notBlocked.filter(i => i.type === "ghl" && isMyGhl(i))
+    : notBlocked.filter(i => i.type === "ghl");
   const sel = items.find(i => i.id === selected);
   const unreadEmail = notBlocked.filter(i => i.type === "email" && !i.read).length;
   const unreadGhl = notBlocked.filter(i => i.type === "ghl" && !i.read).length;
