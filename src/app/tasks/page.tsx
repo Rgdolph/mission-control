@@ -8,6 +8,7 @@ type Task = {
   title: string;
   focus: boolean;
   waiting: boolean;
+  toFile: boolean;
   owner: string | null;
   dueDate: string | null;
   context: string | null;
@@ -81,8 +82,8 @@ function filterTasks(tasks: Task[], tab: Tab): Task[] {
       const exclude = ["marissa velasco", "julie mcginnis", "brandon dailey", "molly clark"];
       return tasks.filter(
         (t) =>
-          !t.focus &&
           !t.waiting &&
+          !t.toFile &&
           !exclude.some((name) => t.owner?.toLowerCase().includes(name))
       );
     }

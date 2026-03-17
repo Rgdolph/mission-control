@@ -39,6 +39,7 @@ function extractTask(page: NotionPage) {
 
   const focus = p["Focus"]?.checkbox ?? false;
   const waiting = p["Waiting"]?.checkbox ?? false;
+  const toFile = p["To File"]?.checkbox ?? false;
 
   const ownerProp = p["Owner"] || p["Assigned To"] || p["Person"];
   const owner = ownerProp?.people?.[0]?.name ?? null;
@@ -54,6 +55,7 @@ function extractTask(page: NotionPage) {
     title,
     focus,
     waiting,
+    toFile,
     owner,
     dueDate,
     context,
