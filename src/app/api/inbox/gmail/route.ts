@@ -31,6 +31,18 @@ interface GmailMessage {
   };
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
 const AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=http://localhost:3000/api/auth/google/callback&response_type=code&scope=https://www.googleapis.com/auth/gmail.readonly%20https://www.googleapis.com/auth/calendar.readonly%20https://www.googleapis.com/auth/tasks&access_type=offline&prompt=consent`;
 
 export async function GET() {
@@ -98,8 +110,8 @@ export async function GET() {
           type: "email" as const,
           from: fromName,
           fromEmail: fromRaw,
-          subject: getHeader("Subject") || "(no subject)",
-          snippet: msg.snippet,
+          subject: decodeHtmlEntities(getHeader("Subject") || "(no subject)"),
+          snippet: decodeHtmlEntities(msg.snippet || ""),
           time: new Date(parseInt(msg.internalDate)).toISOString(),
           read: !msg.labelIds?.includes("UNREAD"),
         };
